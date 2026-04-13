@@ -380,7 +380,7 @@ Worked example: ${fragmentationContent.workedExample}`;
             <p>Nagavaibhav N(24BAI1104)</p>
             <p>Meiyappan K (24BAI1143)</p>
             <p><b>Guided By:</b></p>
-            <p>Dr. Swaminathan A</p>
+            <p>Dr. Swaminathan A (Professor, Department of Computer Science)</p>
             <button className="nav-button primary" onClick={() => setShowDeveloper(false)}>
               Close
             </button>
