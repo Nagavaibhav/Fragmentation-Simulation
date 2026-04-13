@@ -376,11 +376,40 @@ Worked example: ${fragmentationContent.workedExample}`;
         <div className="modal-backdrop" onClick={() => setShowDeveloper(false)}>
           <div className="modal-card" onClick={(event) => event.stopPropagation()}>
             <h3>Developed by</h3>
-            <p><b>Developers:</b></p>
-            <p>Nagavaibhav N(24BAI1104)</p>
-            <p>Meiyappan K (24BAI1143)</p>
-            <p><b>Guided By:</b></p>
-            <p>Dr. Swaminathan A (Professor, Department of Computer Science)</p>
+
+            <div className="profile-section">
+              <p className="profile-section-title"><b>Developers:</b></p>
+              <div className="profile-list">
+                <div className="profile-item">
+                  <img className="profile-photo" src="/nagavaibhav.png" alt="Nagavaibhav N" />
+                  <div>
+                    <p className="profile-name">Nagavaibhav N</p>
+                    <p className="profile-role">24BAI1104</p>
+                  </div>
+                </div>
+                <div className="profile-item">
+                  <img className="profile-photo" src="/meiyappan.jpeg" alt="Meiyappan K" />
+                  <div>
+                    <p className="profile-name">Meiyappan K</p>
+                    <p className="profile-role">24BAI1143</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="profile-section">
+              <p className="profile-section-title"><b>Guided By:</b></p>
+              <div className="profile-list">
+                <div className="profile-item">
+                  <img className="profile-photo" src="/swaminathan_sir.jpg" alt="Dr. Swaminathan A" />
+                  <div>
+                    <p className="profile-name">Dr. Swaminathan A</p>
+                    <p className="profile-role">Professor, Department of Computer Science</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <button className="nav-button primary" onClick={() => setShowDeveloper(false)}>
               Close
             </button>
