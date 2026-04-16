@@ -262,6 +262,73 @@ Worked example: ${fragmentationContent.workedExample}`;
                   <p><strong>Total fragments created:</strong> {fragmentSimulation.fragmentCount}</p>
                 </div>
 
+                <div className="route-visual-card">
+                  <div className="route-visual-header">
+                    <div>
+                      <h4>Packet Transmission Through Router</h4>
+                      <p>
+                        The sender transmits one large datagram. At the router, the next-hop MTU forces fragmentation before the
+                        packet continues toward the destination.
+                      </p>
+                    </div>
+                    <span className="topic-pill">Offset View</span>
+                  </div>
+
+                  <div className="route-flow">
+                    <div className="network-node sender-node">
+                      <span className="network-node-label">Sender</span>
+                      <strong>Original Datagram</strong>
+                      <small>{payloadSize + headerSize}B total</small>
+                    </div>
+
+                    <div className="route-link">
+                      <span className="route-link-label">Unfragmented path</span>
+                    </div>
+
+                    <div className="network-node router-node">
+                      <span className="network-node-label">Router</span>
+                      <strong>Checks MTU</strong>
+                      <small>Next hop allows {mtu}B</small>
+                    </div>
+
+                    <div className="route-link constrained-link">
+                      <span className="route-link-label">Fragments forwarded</span>
+                    </div>
+
+                    <div className="network-node destination-node">
+                      <span className="network-node-label">Destination</span>
+                      <strong>Reassembles</strong>
+                      <small>{fragmentSimulation.fragmentCount} fragments received</small>
+                    </div>
+                  </div>
+
+                  <div className="route-fragment-grid">
+                    <article className="route-fragment-card original-datagram-card">
+                      <span className="route-fragment-tag">Before Router</span>
+                      <h5>Original Datagram</h5>
+                      <div className="mini-fragment-bar original-bar">
+                        <span className="mini-header-segment">Header {headerSize}B</span>
+                        <span className="mini-payload-segment">Payload {payloadSize}B</span>
+                      </div>
+                      <p>Total size: {payloadSize + headerSize}B</p>
+                      <p>Offset = 0, MF = 0 before fragmentation</p>
+                    </article>
+
+                    {fragmentSimulation.fragments.map((fragment) => (
+                      <article key={`route-${fragment.fragmentNumber}`} className="route-fragment-card">
+                        <span className="route-fragment-tag">After Router</span>
+                        <h5>Fragment {fragment.fragmentNumber}</h5>
+                        <div className="mini-fragment-bar">
+                          <span className="mini-header-segment">Header {headerSize}B</span>
+                          <span className="mini-payload-segment">Bytes {fragment.offsetUnits * 8}-{fragment.offsetUnits * 8 + fragment.payload - 1}</span>
+                        </div>
+                        <p>Payload = {fragment.payload}B, Total = {fragment.totalSize}B</p>
+                        <p>Offset = {fragment.offsetUnits}, MF = {fragment.moreFragments}</p>
+                      </article>
+                    ))}
+                  </div>
+                </div>
+
                 <div className="fragment-visuals">
                   {fragmentSimulation.fragments.map((fragment) => (
                     <div key={fragment.fragmentNumber} className="fragment-card-block">
