@@ -1,6 +1,6 @@
 import "./App.css";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const fragmentationContent = {
   title: "Fragmentation",
@@ -53,6 +53,36 @@ const virtualLabs = [
     url: "https://vlab.amrita.edu/?sub=3&brch=257",
   },
 ];
+
+
+function formatOffsetValue(value) {
+  return String(value).padStart(3, "0");
+}
+
+function buildOffsetDiagram(payloadSize, headerSize, fragments) {
+  return {
+    original: {
+      id: "original",
+      title: "Original datagram",
+      bytes: `Bytes 0000-${Math.max(payloadSize - 1, 0)}`,
+      total: payloadSize + headerSize,
+      offset: 0,
+      mf: fragments.length > 1 ? 1 : 0,
+    },
+    fragments: fragments.map((fragment) => {
+      const byteStart = fragment.offsetUnits * 8;
+      const byteEnd = byteStart + fragment.payload - 1;
+      return {
+        id: `fragment-${fragment.fragmentNumber}`,
+        title: `Fragment ${fragment.fragmentNumber}`,
+        bytes: `Bytes ${String(byteStart).padStart(4, "0")}-${String(byteEnd).padStart(4, "0")}`,
+        total: fragment.totalSize,
+        offset: fragment.offsetUnits,
+        mf: fragment.moreFragments,
+      };
+    }),
+  };
+}
 
 function buildFragmentationSimulation(payloadSize, mtu, headerSize) {
   const safePayload = Number(payloadSize);
@@ -128,13 +158,30 @@ function ScrollButton({ label, targetId, kind = "secondary" }) {
 function App() {
   const [showHelp, setShowHelp] = useState(false);
   const [showDeveloper, setShowDeveloper] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [payloadSize, setPayloadSize] = useState(4000);
   const [mtu, setMtu] = useState(1500);
   const [headerSize, setHeaderSize] = useState(20);
 
+  useEffect(() => {
+    const savedTheme = window.localStorage.getItem("fragmentation-theme");
+    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const shouldUseDark = savedTheme ? savedTheme === "dark" : prefersDark;
+    setIsDarkMode(shouldUseDark);
+  }, []);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDarkMode ? "dark" : "light";
+    window.localStorage.setItem("fragmentation-theme", isDarkMode ? "dark" : "light");
+  }, [isDarkMode]);
+
   const fragmentSimulation = useMemo(
     () => buildFragmentationSimulation(payloadSize, mtu, headerSize),
     [payloadSize, mtu, headerSize]
+  );
+  const offsetDiagram = useMemo(
+    () => buildOffsetDiagram(payloadSize, headerSize, fragmentSimulation.fragments),
+    [payloadSize, headerSize, fragmentSimulation.fragments]
   );
 
   const handleDownload = () => {
@@ -156,6 +203,9 @@ Worked example: ${fragmentationContent.workedExample}`;
   return (
     <div className="app-shell">
       <nav className="top-navbar" aria-label="Utility navigation">
+        <button className="nav-button secondary top-nav-button theme-toggle" onClick={() => setIsDarkMode((current) => !current)}>
+          {isDarkMode ? "Light mode" : "Dark mode"}
+        </button>
         <button className="nav-button secondary top-nav-button" onClick={() => setShowHelp(true)}>
           Help
         </button>
@@ -262,70 +312,49 @@ Worked example: ${fragmentationContent.workedExample}`;
                   <p><strong>Total fragments created:</strong> {fragmentSimulation.fragmentCount}</p>
                 </div>
 
-                <div className="route-visual-card">
-                  <div className="route-visual-header">
+                <div className="offset-example-card">
+                  <div className="offset-example-header">
                     <div>
-                      <h4>Packet Transmission Through Router</h4>
+                      <h4>Fragmentation Offset Diagram</h4>
                       <p>
-                        The sender transmits one large datagram. At the router, the next-hop MTU forces fragmentation before the
-                        packet continues toward the destination.
+                        This diagram updates from the current simulator input. The left packet is the original datagram, and the
+                        packets on the right show the exact fragments produced by the router for the MTU you entered.
                       </p>
                     </div>
-                    <span className="topic-pill">Offset View</span>
+                    <span className="topic-pill">Live offset view</span>
                   </div>
 
-                  <div className="route-flow">
-                    <div className="network-node sender-node">
-                      <span className="network-node-label">Sender</span>
-                      <strong>Original Datagram</strong>
-                      <small>{payloadSize + headerSize}B total</small>
-                    </div>
-
-                    <div className="route-link">
-                      <span className="route-link-label">Unfragmented path</span>
-                    </div>
-
-                    <div className="network-node router-node">
-                      <span className="network-node-label">Router</span>
-                      <strong>Checks MTU</strong>
-                      <small>Next hop allows {mtu}B</small>
-                    </div>
-
-                    <div className="route-link constrained-link">
-                      <span className="route-link-label">Fragments forwarded</span>
-                    </div>
-
-                    <div className="network-node destination-node">
-                      <span className="network-node-label">Destination</span>
-                      <strong>Reassembles</strong>
-                      <small>{fragmentSimulation.fragmentCount} fragments received</small>
-                    </div>
-                  </div>
-
-                  <div className="route-fragment-grid">
-                    <article className="route-fragment-card original-datagram-card">
-                      <span className="route-fragment-tag">Before Router</span>
-                      <h5>Original Datagram</h5>
-                      <div className="mini-fragment-bar original-bar">
-                        <span className="mini-header-segment">Header {headerSize}B</span>
-                        <span className="mini-payload-segment">Payload {payloadSize}B</span>
-                      </div>
-                      <p>Total size: {payloadSize + headerSize}B</p>
-                      <p>Offset = 0, MF = 0 before fragmentation</p>
-                    </article>
-
-                    {fragmentSimulation.fragments.map((fragment) => (
-                      <article key={`route-${fragment.fragmentNumber}`} className="route-fragment-card">
-                        <span className="route-fragment-tag">After Router</span>
-                        <h5>Fragment {fragment.fragmentNumber}</h5>
-                        <div className="mini-fragment-bar">
-                          <span className="mini-header-segment">Header {headerSize}B</span>
-                          <span className="mini-payload-segment">Bytes {fragment.offsetUnits * 8}-{fragment.offsetUnits * 8 + fragment.payload - 1}</span>
+                  <div className="offset-dynamic-layout" aria-label="Fragmentation offset diagram">
+                    <div className="offset-origin-column">
+                      <article className="offset-packet-card offset-packet-origin">
+                        <div className="offset-field-row">
+                          <span className="offset-field">14567</span>
+                          <span className="offset-field">{offsetDiagram.original.total}</span>
+                          <span className="offset-field">MF {offsetDiagram.original.mf}</span>
+                          <span className="offset-field offset-highlight">{formatOffsetValue(offsetDiagram.original.offset)}</span>
                         </div>
-                        <p>Payload = {fragment.payload}B, Total = {fragment.totalSize}B</p>
-                        <p>Offset = {fragment.offsetUnits}, MF = {fragment.moreFragments}</p>
+                        <p className="offset-bytes">{offsetDiagram.original.bytes}</p>
+                        <p className="offset-name">{offsetDiagram.original.title}</p>
                       </article>
-                    ))}
+                    </div>
+
+                    <div className="offset-split-column">
+                      {offsetDiagram.fragments.map((packet) => (
+                        <div key={packet.id} className="offset-fragment-row">
+                          <span className="offset-row-connector" />
+                          <article className="offset-packet-card offset-packet-fragment">
+                            <div className="offset-field-row">
+                              <span className="offset-field">14567</span>
+                              <span className="offset-field">{packet.total}</span>
+                              <span className="offset-field">MF {packet.mf}</span>
+                              <span className="offset-field offset-highlight">{formatOffsetValue(packet.offset)}</span>
+                            </div>
+                            <p className="offset-bytes">{packet.bytes}</p>
+                            <p className="offset-name">{packet.title}</p>
+                          </article>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
